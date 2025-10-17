@@ -8,13 +8,31 @@
 </head>
 <body>
     <div class="container">
-        <h1>🛒 Multiverse Shop Calculator</h1>
+        <div class="header-row">
+            <h1>🛒 Multiverse Shop Calculator</h1>
+            <button class="toggle-btn" onclick="toggleDarkMode()">☀️🌙</button>
+        </div>
         <p class="subtitle">Optimize your chip spending strategy</p>
-
-        <button class="toggle-btn" onclick="toggleDarkMode()">☀️🌙</button>
         
         <div class="section">
-            <div class="section-title">Current Shop Items</div>
+            <div class="section-header">
+                <div class="section-title">Current Shop Items</div>
+                <div class="level-selector">
+                    <span class="level-label">Shop Level:</span>
+                    <select id="shopLevelDropdown" class="level-dropdown" onchange="changeShopLevel(this.value)">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                    </select>
+                </div>
+            </div>
             <div class="shop-grid" id="shopGrid"></div>
             <button class="refresh-btn" onclick="refreshShop()">🔄 REFRESH SHOP</button>
             <button class="btn" onclick="calculateStrategy()">Calculate Best Strategy</button>
@@ -27,9 +45,9 @@
             <div id="editSection" class="edit-section hidden">
                 <div class="edit-grid-header">
                     <div class="edit-header">Category Name</div>
-                    <div class="edit-header">Base Value</div>
-                    <div class="edit-header">Base Chance %</div>
-                    <div class="edit-header">Multiplier</div>
+                    <div class="edit-header">Value</div>
+                    <div class="edit-header">Chance %</div>
+                    <div class="edit-header"># of Items</div>
                 </div>
                 <div id="editGrid"></div>
                 <button class="btn" onclick="saveChanges()" style="margin-top: 15px;">Save Changes</button>

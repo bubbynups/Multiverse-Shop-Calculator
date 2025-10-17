@@ -1,35 +1,235 @@
-// Load categories from localStorage or use defaults
-function loadCategories() {
-    const saved = localStorage.getItem('categories');
-    if (saved) {
-        return JSON.parse(saved);
+// Organized shop level configuration
+// Each level defines the TOTAL chance for each category group
+const shopLevelRates = {
+    1: {
+        commonXP: 15,
+        rareXP: 10,
+        specialXP: 5,
+        multiverseClearance: 5,
+        restrictedClearance: 0,
+        artifacts5x: 12,
+        artifacts10x: 0,
+        artifacts20x: 0,
+        rareHeroes: 50,
+        eliteHeroes: 3
+    },
+    2: {
+        commonXP: 14,
+        rareXP: 10,
+        specialXP: 5,
+        multiverseClearance: 5,
+        restrictedClearance: 0,
+        artifacts5x: 13,
+        artifacts10x: 0,
+        artifacts20x: 0,
+        rareHeroes: 49.5,
+        eliteHeroes: 3.5
+    },
+    3: {
+        commonXP: 13,
+        rareXP: 10,
+        specialXP: 5,
+        multiverseClearance: 5,
+        restrictedClearance: 5,
+        artifacts5x: 13.9992,
+        artifacts10x: 0.9996,
+        artifacts20x: 0,
+        rareHeroes: 43,
+        eliteHeroes: 4
+    },
+    4: {
+        commonXP: 12,
+        rareXP: 10,
+        specialXP: 5,
+        multiverseClearance: 5,
+        restrictedClearance: 5,
+        artifacts5x: 15,
+        artifacts10x: 1.9992,
+        artifacts20x: 0,
+        rareHeroes: 41.5,
+        eliteHeroes: 4.5
+    },
+    5: {
+        commonXP: 11,
+        rareXP: 10,
+        specialXP: 5,
+        multiverseClearance: 7,
+        restrictedClearance: 7,
+        artifacts5x: 15.9996,
+        artifacts10x: 1.9992,
+        artifacts20x: 0.4992,
+        rareHeroes: 36.5,
+        eliteHeroes: 5
+    },
+    6: {
+        commonXP: 10,
+        rareXP: 10,
+        specialXP: 5,
+        multiverseClearance: 7,
+        restrictedClearance: 7,
+        artifacts5x: 16.9992,
+        artifacts10x: 3,
+        artifacts20x: 0.4992,
+        rareHeroes: 35,
+        eliteHeroes: 5.5
+    },
+    7: {
+        commonXP: 9,
+        rareXP: 10,
+        specialXP: 5,
+        multiverseClearance: 9,
+        restrictedClearance: 9,
+        artifacts5x: 18,
+        artifacts10x: 3,
+        artifacts20x: 0.6,
+        rareHeroes: 30.399,
+        eliteHeroes: 6
+    },
+    8: {
+        commonXP: 8,
+        rareXP: 10,
+        specialXP: 5,
+        multiverseClearance: 9,
+        restrictedClearance: 9,
+        artifacts5x: 18.9996,
+        artifacts10x: 3.9996,
+        artifacts20x: 0.6,
+        rareHeroes: 28.899,
+        eliteHeroes: 6.5
+    },
+    9: {
+        commonXP: 7,
+        rareXP: 10,
+        specialXP: 5,
+        multiverseClearance: 10,
+        restrictedClearance: 10,
+        artifacts5x: 19.9992,
+        artifacts10x: 3.9996,
+        artifacts20x: 0.6996,
+        rareHeroes: 26.299,
+        eliteHeroes: 7
+    },
+    10: {
+        commonXP: 6,
+        rareXP: 10,
+        specialXP: 5,
+        multiverseClearance: 10,
+        restrictedClearance: 10,
+        artifacts5x: 21,
+        artifacts10x: 4.9992,
+        artifacts20x: 0.7992,
+        rareHeroes: 24.7,
+        eliteHeroes: 7.5
     }
-    // Default categories
-    return [
-        {name: "Common Artifact XP", baseValue: 50, baseChance: 12, multiplier: 1},
-        {name: "Rare Artifact XP", baseValue: 100, baseChance: 10, multiplier: 1},
-        {name: "Special Artifact XP", baseValue: 150, baseChance: 5, multiplier: 1},
-        {name: "Restricted Multiverse Clearances", baseValue: 530, baseChance: 5, multiplier: 1},
-        {name: "Multiverse Clearances", baseValue: 320, baseChance: 5, multiplier: 1},
-        {name: "Better 5x Artifact(s)", baseValue: 150, baseChance: 1.25, multiplier: 6},
-        {name: "Worse 5x Artifact(s)", baseValue: 75, baseChance: 1.25, multiplier: 6},
-        {name: "Better 10x Artifact(s)", baseValue: 300, baseChance: 0.1666, multiplier: 6},
-        {name: "Worse 10x Artifact(s)", baseValue: 150, baseChance: 0.1666, multiplier: 6},
-        {name: "Better 20x Artifact(s)", baseValue: 1200, baseChance: 0, multiplier: 6},
-        {name: "Worse 20x Artifact(s)", baseValue: 900, baseChance: 0, multiplier: 6},
-        {name: "Multi-Paul", baseValue: 150, baseChance: 10.375, multiplier: 1},
-        {name: "Kid Omni-Man", baseValue: 150, baseChance: 10.375, multiplier: 1},
-        {name: "Damien Darkblood", baseValue: 150, baseChance: 10.375, multiplier: 1},
-        {name: "Dupli-Kate", baseValue: 150, baseChance: 10.375, multiplier: 1},
-        {name: "Elite Hero(es) (Non-Food)", baseValue: 1500, baseChance: 0.5625, multiplier: 2},
-        {name: "Elite Hero(es) (Food)", baseValue: 1000, baseChance: 0.5625, multiplier: 6},
-    ];
+};
+
+// Rare heroes list (4 heroes, chance split equally)
+const rareHeroesList = ["Multi-Paul", "Kid Omni-Man", "Damien Darkblood", "Dupli-Kate"];
+
+// Elite heroes list (8 heroes, chance split equally)
+const eliteHeroesList = [
+    "Agent Spider", "Dark Wing 2", "Cecil Stedman", "King Lizard",
+    "Iguana", "Lucan", "Shapesmith", "Thula"
+];
+
+// Generate categories based on shop level rates
+function generateCategoriesForLevel(level) {
+    const rates = shopLevelRates[level];
+    if (!rates) return [];
+    
+    const categories = [];
+    
+    // XP items
+    categories.push({name: "Common Artifact XP", baseValue: 50, baseChance: rates.commonXP, multiplier: 1});
+    categories.push({name: "Rare Artifact XP", baseValue: 100, baseChance: rates.rareXP, multiplier: 1});
+    categories.push({name: "Special Artifact XP", baseValue: 150, baseChance: rates.specialXP, multiplier: 1});
+    
+    // Clearances
+    categories.push({name: "Multiverse Clearances", baseValue: 320, baseChance: rates.multiverseClearance, multiplier: 1});
+    if (rates.restrictedClearance > 0) {
+        categories.push({name: "Restricted Multiverse Clearances", baseValue: 530, baseChance: rates.restrictedClearance, multiplier: 1});
+    }
+    
+    // Artifacts (12 artifacts per tier, split 50/50 better/worse)
+    if (rates.artifacts5x > 0) {
+        const per5xArtifact = rates.artifacts5x / 12;
+        categories.push({name: "Better 5x Artifact(s)", baseValue: 150, baseChance: per5xArtifact, multiplier: 6});
+        categories.push({name: "Worse 5x Artifact(s)", baseValue: 75, baseChance: per5xArtifact, multiplier: 6});
+    }
+    
+    if (rates.artifacts10x > 0) {
+        const per10xArtifact = rates.artifacts10x / 12;
+        categories.push({name: "Better 10x Artifact(s)", baseValue: 300, baseChance: per10xArtifact, multiplier: 6});
+        categories.push({name: "Worse 10x Artifact(s)", baseValue: 150, baseChance: per10xArtifact, multiplier: 6});
+    }
+    
+    if (rates.artifacts20x > 0) {
+        const per20xArtifact = rates.artifacts20x / 12;
+        categories.push({name: "Better 20x Artifact(s)", baseValue: 1200, baseChance: per20xArtifact, multiplier: 6});
+        categories.push({name: "Worse 20x Artifact(s)", baseValue: 900, baseChance: per20xArtifact, multiplier: 6});
+    }
+    
+    // Rare Heroes (4 heroes, split equally)
+    const perRareHero = rates.rareHeroes / 4;
+    rareHeroesList.forEach(hero => {
+        categories.push({name: hero, baseValue: 150, baseChance: perRareHero, multiplier: 1});
+    });
+    
+    // Elite Heroes (8 heroes, split equally, 6 are "food", 2 are "non-food")
+    const perEliteHero = rates.eliteHeroes / 8;
+    categories.push({name: "Elite Hero(es) (Non-Food)", baseValue: 1500, baseChance: perEliteHero, multiplier: 2}); // Shapesmith, Thula
+    categories.push({name: "Elite Hero(es) (Food)", baseValue: 1000, baseChance: perEliteHero, multiplier: 6}); // Other 6
+    
+    return categories;
+}
+
+// Verify totals add up to ~100%
+function verifyShopLevels() {
+    for (let level = 1; level <= 10; level++) {
+        const rates = shopLevelRates[level];
+        const total = rates.commonXP + rates.rareXP + rates.specialXP + 
+                     rates.multiverseClearance + rates.restrictedClearance +
+                     rates.artifacts5x + rates.artifacts10x + rates.artifacts20x +
+                     rates.rareHeroes + rates.eliteHeroes;
+        
+        if (Math.abs(total - 100) > 1) {
+            console.warn(`Shop Level ${level} total: ${total.toFixed(4)}% (off by ${(total - 100).toFixed(4)}%)`);
+        } else {
+            console.log(`Shop Level ${level}: ${total.toFixed(4)}% ✓`);
+        }
+    }
+}
+
+// Run verification on load
+verifyShopLevels();
+
+// Load current shop level from localStorage or default to 1
+function loadShopLevel() {
+    const saved = localStorage.getItem('shopLevel');
+    return saved ? parseInt(saved) : 1;
+}
+
+function saveShopLevel(level) {
+    localStorage.setItem('shopLevel', level);
+}
+
+function loadCategories() {
+    const currentLevel = loadShopLevel();
+    return generateCategoriesForLevel(currentLevel);
 }
 
 let categories = loadCategories();
+let currentShopLevel = loadShopLevel();
 
-function saveCategoriesToStorage() {
-    localStorage.setItem('categories', JSON.stringify(categories));
+function changeShopLevel(level) {
+    currentShopLevel = parseInt(level);
+    saveShopLevel(currentShopLevel);
+    categories = generateCategoriesForLevel(currentShopLevel);
+    
+    // Refresh UI
+    initShopGrid();
+    initEditGrid();
+    document.getElementById('resultSection').innerHTML = '';
 }
 
 function getTotalChance(category) {
@@ -76,13 +276,20 @@ function initEditGrid() {
     editGrid.innerHTML = '';
     
     categories.forEach((cat, idx) => {
+        // Determine if multiplier should be editable
+        // Only editable for artifacts and heroes (items with multiplier > 1)
+        // Also disabled chance editing for all items because shop level rates govern that
+        const isMultiplierEditable = cat.multiplier > 1;
+        const multiplierDisabled = isMultiplierEditable ? '' : 'disabled';
+        const chanceDisabled = 'disabled';
+        
         const row = document.createElement('div');
         row.className = 'edit-grid';
         row.innerHTML = `
             <div class="item-name">${cat.name}</div>
             <input type="number" id="value${idx}" value="${cat.baseValue}" step="1">
-            <input type="number" id="chance${idx}" value="${cat.baseChance}" step="0.0001">
-            <input type="number" id="multiplier${idx}" value="${cat.multiplier}" step="1" min="1">
+            <input type="number" id="chance${idx}" value="${cat.baseChance}" step="0.0001" ${chanceDisabled}>
+            <input type="number" id="multiplier${idx}" value="${cat.multiplier}" step="1" min="1" ${multiplierDisabled}>
         `;
         editGrid.appendChild(row);
     });
@@ -100,10 +307,8 @@ function saveChanges() {
         cat.multiplier = parseInt(document.getElementById(`multiplier${idx}`).value);
     });
     
-    saveCategoriesToStorage();
-    
     const totalChance = categories.reduce((sum, cat) => sum + getTotalChance(cat), 0);
-    alert(`Changes saved! Total chance: ${totalChance.toFixed(4)}%`);
+    alert(`Changes saved for Shop Level ${currentShopLevel}! Total chance: ${totalChance.toFixed(4)}%`);
     initShopGrid();
 }
 
@@ -243,7 +448,7 @@ function calculateStrategy() {
     
     resultHTML += `
         <div class="result-box">
-            <div class="result-title">📊 Analysis Results</div>
+            <div class="result-title">📊 Analysis Results (Shop Level ${currentShopLevel})</div>
             <div class="result-detail"><strong>Total Shop Value:</strong> ${totalValue} chips</div>
             <div class="result-detail"><strong>Buy All Cost:</strong> ${buyAllCost} chips</div>
             <div class="result-detail"><strong>Contains 1500-Value Item:</strong> ${has1500Item ? 'Yes ✓' : 'No ✗'}</div>
@@ -274,5 +479,11 @@ function toggleDarkMode() {
 window.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('darkMode') === 'enabled') {
         document.body.classList.add('dark-mode');
+    }
+    
+    // Set the shop level dropdown to current level
+    const levelDropdown = document.getElementById('shopLevelDropdown');
+    if (levelDropdown) {
+        levelDropdown.value = currentShopLevel;
     }
 });
