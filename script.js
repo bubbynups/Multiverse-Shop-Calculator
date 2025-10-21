@@ -1,5 +1,4 @@
-// Organized shop level configuration
-// Each level defines the TOTAL chance for each category group
+// Shop level data - organized rates
 const shopLevelRates = {
     1: {
         commonXP: 15,
@@ -123,34 +122,27 @@ const shopLevelRates = {
     }
 };
 
-// Rare heroes list (4 heroes, chance split equally)
 const rareHeroesList = ["Multi-Paul", "Kid Omni-Man", "Damien Darkblood", "Dupli-Kate"];
-
-// Elite heroes list (8 heroes, chance split equally)
 const eliteHeroesList = [
     "Agent Spider", "Dark Wing 2", "Cecil Stedman", "King Lizard",
     "Iguana", "Lucan", "Shapesmith", "Thula"
 ];
 
-// Generate categories based on shop level rates
 function generateCategoriesForLevel(level) {
     const rates = shopLevelRates[level];
     if (!rates) return [];
     
     const categories = [];
     
-    // XP items
     categories.push({name: "Common Artifact XP", baseValue: 50, baseChance: rates.commonXP, multiplier: 1});
     categories.push({name: "Rare Artifact XP", baseValue: 100, baseChance: rates.rareXP, multiplier: 1});
     categories.push({name: "Special Artifact XP", baseValue: 150, baseChance: rates.specialXP, multiplier: 1});
     
-    // Clearances
     categories.push({name: "Multiverse Clearances", baseValue: 320, baseChance: rates.multiverseClearance, multiplier: 1});
     if (rates.restrictedClearance > 0) {
         categories.push({name: "Restricted Multiverse Clearances", baseValue: 530, baseChance: rates.restrictedClearance, multiplier: 1});
     }
     
-    // Artifacts (12 artifacts per tier, split 50/50 better/worse)
     if (rates.artifacts5x > 0) {
         const per5xArtifact = rates.artifacts5x / 12;
         categories.push({name: "Better 5x Artifact(s)", baseValue: 150, baseChance: per5xArtifact, multiplier: 6});
@@ -169,21 +161,18 @@ function generateCategoriesForLevel(level) {
         categories.push({name: "Worse 20x Artifact(s)", baseValue: 900, baseChance: per20xArtifact, multiplier: 6});
     }
     
-    // Rare Heroes (4 heroes, split equally)
     const perRareHero = rates.rareHeroes / 4;
     rareHeroesList.forEach(hero => {
         categories.push({name: hero, baseValue: 150, baseChance: perRareHero, multiplier: 1});
     });
     
-    // Elite Heroes (8 heroes, split equally, 6 are "food", 2 are "non-food")
     const perEliteHero = rates.eliteHeroes / 8;
-    categories.push({name: "Elite Hero(es) (Non-Food)", baseValue: 1500, baseChance: perEliteHero, multiplier: 2}); // Shapesmith, Thula
-    categories.push({name: "Elite Hero(es) (Food)", baseValue: 1000, baseChance: perEliteHero, multiplier: 6}); // Other 6
+    categories.push({name: "Elite Hero(es) (Non-Food)", baseValue: 1500, baseChance: perEliteHero, multiplier: 2});
+    categories.push({name: "Elite Hero(es) (Food)", baseValue: 1000, baseChance: perEliteHero, multiplier: 6});
     
     return categories;
 }
 
-// Verify totals add up to ~100%
 function verifyShopLevels() {
     for (let level = 1; level <= 10; level++) {
         const rates = shopLevelRates[level];
@@ -200,10 +189,8 @@ function verifyShopLevels() {
     }
 }
 
-// Run verification on load
 verifyShopLevels();
 
-// Load current shop level from localStorage or default to 1
 function loadShopLevel() {
     const saved = localStorage.getItem('shopLevel');
     return saved ? parseInt(saved) : 1;
@@ -226,7 +213,6 @@ function changeShopLevel(level) {
     saveShopLevel(currentShopLevel);
     categories = generateCategoriesForLevel(currentShopLevel);
     
-    // Refresh UI
     initShopGrid();
     initEditGrid();
     document.getElementById('resultSection').innerHTML = '';
@@ -276,12 +262,9 @@ function initEditGrid() {
     editGrid.innerHTML = '';
     
     categories.forEach((cat, idx) => {
-        // Determine if multiplier should be editable
-        // Only editable for artifacts and heroes (items with multiplier > 1)
-        // Also disabled chance editing for all items because shop level rates govern that
         const isMultiplierEditable = cat.multiplier > 1;
         const multiplierDisabled = isMultiplierEditable ? '' : 'disabled';
-        const chanceDisabled = 'disabled';
+        const chanceDisabled = 'disabled'; // Always disabled since shop levels govern this
         
         const row = document.createElement('div');
         row.className = 'edit-grid';
@@ -372,6 +355,43 @@ function calculateRareProbability(rareCategoryCounts) {
     return totalProbability * 100;
 }
 
+function calculateExpectedSnipeCost(maxSingles = 4) {
+    // Based on ChatGPT's mathematical analysis
+    // Formula: E[cost] = Σ(k=1 to n) P(success on k) × cost(k) + P(fail all) × 2400
+    
+    const singleCost = 500;
+    const buyAllCost = 2400;
+    const shopSize = 6;
+    
+    let expectedCost = 0;
+    
+    // Sum expected cost for each possible success point
+    for (let k = 1; k <= maxSingles; k++) {
+        // P(fail first k-1, succeed on k-th) = (5/6)^(k-1) × (1/6)
+        const probFailBefore = Math.pow((shopSize - 1) / shopSize, k - 1);
+        const probSuccessOnK = 1 / shopSize;
+        const probThisOutcome = probFailBefore * probSuccessOnK;
+        
+        // Cost is k singles at 500 each
+        const costIfSuccess = singleCost * k;
+        
+        expectedCost += probThisOutcome * costIfSuccess;
+    }
+    
+    // Probability of failing all maxSingles
+    const probFailAll = Math.pow(5 / 6, maxSingles);
+    
+    // If we fail all singles, we buy remaining (2400 - 500*maxSingles)
+    const remainingPackCost = buyAllCost - (singleCost * maxSingles);
+    const totalCostIfFailAll = (singleCost * maxSingles) + remainingPackCost; // = 2400
+    
+    expectedCost += probFailAll * totalCostIfFailAll;
+    
+    return expectedCost;
+}
+
+const SNIPE_THRESHOLD = 1633.33;
+
 function calculateStrategy() {
     const selectedCategories = [];
     
@@ -396,25 +416,53 @@ function calculateStrategy() {
     
     const totalValue = selectedCategories.reduce((sum, cat) => sum + cat.baseValue, 0);
     const buyAllCost = 2400;
-    const has1500Item = selectedCategories.some(cat => cat.baseValue === 1500);
+    const avgItemValue = totalValue / 6;
+    
+    // Find highest value item for sniping analysis
+    const sortedByValue = [...selectedCategories].sort((a, b) => b.baseValue - a.baseValue);
+    const highestValueItem = sortedByValue[0];
+    const otherItemsTotal = totalValue - highestValueItem.baseValue;
+    const otherItemsAvg = otherItemsTotal / 5;
+    
+    // Calculate expected cost for optimal sniping strategy (4 singles max)
+    const expectedSnipeCost = calculateExpectedSnipeCost(4);    const snipeThreshold = 1633.33;
     
     let recommendation = '';
     let details = '';
+    let snipeAnalysis = '';
     
     if (totalValue >= buyAllCost) {
         const profit = totalValue - buyAllCost;
         recommendation = `✅ BUY ALL - Profit: ${profit} chips`;
         details = `The total value (${totalValue}) exceeds the buy all cost (${buyAllCost}). You'll gain ${profit} chips worth of value!`;
-    } else if (has1500Item) {
-        const item1500 = selectedCategories.find(cat => cat.baseValue === 1500);
-        const snipeChance = (1 / 6 * 100).toFixed(2);
-        const expectedValue = totalValue / 6;
-        recommendation = `🎯 SNIPE - Try to get ${item1500.name}`;
-        details = `Shop contains ${item1500.name} (worth 1500 chips)! You have a ${snipeChance}% chance to get it with a single random buy (cost: 500 chips). Expected value per single buy: ${expectedValue.toFixed(0)} chips.`;
+    } else if (highestValueItem.baseValue > snipeThreshold) {
+        recommendation = `🎯 SNIPE - Try to get ${highestValueItem.name}`;
+        details = `<strong>Optimal Strategy:</strong> Try up to 4 single random pulls, then buy remaining pack if you fail.<br><br>`;
+        details += `<strong>Target Item:</strong> ${highestValueItem.name} (${highestValueItem.baseValue} chips)<br>`;
+        details += `<strong>Expected Cost:</strong> ~${Math.round(expectedSnipeCost)} chips<br>`;
+        details += `<strong>Break-even Value:</strong> ${snipeThreshold.toFixed(2)} chips<br>`;
+        details += `<strong>Your Item Value:</strong> ${highestValueItem.baseValue} chips ✓<br><br>`;
+        details += `Since your target item (${highestValueItem.baseValue}) exceeds the expected cost (~${Math.round(expectedSnipeCost)}), sniping is +EV!`;
+        
+        snipeAnalysis = `
+            <div class="snipe-analysis">
+                <div class="analysis-title">📈 Sniping Mathematics</div>
+                <div class="analysis-detail">• Probability per pull: 1/6 (16.67%)</div>
+                <div class="analysis-detail">• Success within 4 pulls: ~51.8%</div>
+                <div class="analysis-detail">• Average singles used: 3.0</div>
+                <div class="analysis-detail">• Expected total cost: ${Math.round(expectedSnipeCost)} chips</div>
+            </div>
+        `;
     } else {
         const refreshCost = 25;
+
         recommendation = `🔄 REFRESH - Skip this shop`;
-        details = `Total value (${totalValue}) is below buy all cost (${buyAllCost}) and there are no 1500-value items to snipe. Refresh for ${refreshCost} chips or wait for hourly refresh.`;
+        details = `<strong>Analysis:</strong><br>`;
+        details += `• Total value: ${totalValue} chips (below ${buyAllCost})<br>`;
+        details += `• Highest item: ${highestValueItem.name} (${highestValueItem.baseValue} chips)<br>`;
+        details += `• Snipe break-even: ${SNIPE_THRESHOLD.toFixed(2)} chips<br><br>`;
+        details += `The highest value item (${highestValueItem.baseValue}) doesn't exceed the expected sniping cost (~${Math.round(SNIPE_THRESHOLD)} chips). `;
+        details += `Refresh for ${refreshCost} chips or wait for hourly refresh.`;
     }
     
     const resultSection = document.getElementById('resultSection');
@@ -446,15 +494,18 @@ function calculateStrategy() {
         `;
     }
     
+    resultHTML += snipeAnalysis;
+    
     resultHTML += `
         <div class="result-box">
             <div class="result-title">📊 Analysis Results (Shop Level ${currentShopLevel})</div>
             <div class="result-detail"><strong>Total Shop Value:</strong> ${totalValue} chips</div>
-            <div class="result-detail"><strong>Buy All Cost:</strong> ${buyAllCost} chips</div>
-            <div class="result-detail"><strong>Contains 1500-Value Item:</strong> ${has1500Item ? 'Yes ✓' : 'No ✗'}</div>
+            <div class="result-detail"><strong>Average Item Value:</strong> ${avgItemValue.toFixed(0)} chips</div>
+            <div class="result-detail"><strong>Buy All Cost:</strong> ${buyAllCost} chips (400 per item)</div>
+            <div class="result-detail"><strong>Highest Value Item:</strong> ${highestValueItem.name} (${highestValueItem.baseValue} chips)</div>
             <div class="result-recommendation">
                 ${recommendation}
-                <div style="margin-top: 10px; font-size: 14px; font-weight: 400; line-height: 1.5;">
+                <div style="margin-top: 10px; font-size: 14px; font-weight: 400; line-height: 1.6;">
                     ${details}
                 </div>
             </div>
@@ -469,6 +520,8 @@ initEditGrid();
 
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    
     if (document.body.classList.contains('dark-mode')) {
         localStorage.setItem('darkMode', 'enabled');
     } else {
@@ -477,11 +530,15 @@ function toggleDarkMode() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    
     if (localStorage.getItem('darkMode') === 'enabled') {
         document.body.classList.add('dark-mode');
+        if (darkModeToggle) {
+            darkModeToggle.checked = true;
+        }
     }
     
-    // Set the shop level dropdown to current level
     const levelDropdown = document.getElementById('shopLevelDropdown');
     if (levelDropdown) {
         levelDropdown.value = currentShopLevel;

@@ -10,7 +10,10 @@
     <div class="container">
         <div class="header-row">
             <h1>🛒 Multiverse Shop Calculator</h1>
-            <button class="toggle-btn" onclick="toggleDarkMode()">☀️🌙</button>
+            <label class="toggle-switch">
+                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+                <span class="slider"></span>
+            </label>
         </div>
         <p class="subtitle">Optimize your chip spending strategy</p>
         
@@ -35,7 +38,7 @@
             </div>
             <div class="shop-grid" id="shopGrid"></div>
             <button class="refresh-btn" onclick="refreshShop()">🔄 REFRESH SHOP</button>
-            <button class="btn" onclick="calculateStrategy()">Calculate Best Strategy</button>
+            <button class="btn" onclick="calculateStrategy()">🧮 Calculate Best Strategy</button>
         </div>
         
         <div id="resultSection"></div>
@@ -45,8 +48,8 @@
             <div id="editSection" class="edit-section hidden">
                 <div class="edit-grid-header">
                     <div class="edit-header">Category Name</div>
-                    <div class="edit-header">Value</div>
-                    <div class="edit-header">Chance %</div>
+                    <div class="edit-header">Base Value</div>
+                    <div class="edit-header">Base Chance %</div>
                     <div class="edit-header"># of Items</div>
                 </div>
                 <div id="editGrid"></div>

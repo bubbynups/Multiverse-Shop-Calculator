@@ -435,4 +435,31 @@ body.dark-mode input[type="number"]:disabled {
         align-self: flex-end;
     }
 
+    .snipe-analysis {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+    }
+
+    .analysis-title {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+
+    .analysis-detail {
+        font-size: 14px;
+        margin: 6px 0;
+        opacity: 0.95;
+        padding-left: 10px;
+    }
+
+    body.dark-mode .snipe-analysis {
+        background: linear-gradient(135deg, #2d5f2e 0%, #1e4620 100%);
+    }
 }
